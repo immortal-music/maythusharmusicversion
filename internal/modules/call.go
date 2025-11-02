@@ -1,0 +1,82 @@
+package modules
+
+import (
+	"context"
+	"fmt"
+	"html"
+
+	"github.com/Laky-64/gologging"
+	"github.com/amarnathcjd/gogram/telegram"
+
+	"github.com/immortal-music/maythusharmusicversion/internal/core"
+	"github.com/immortal-music/maythusharmusicversion/internal/database"
+	"github.com/immortal-music/maythusharmusicversion/internal/platforms"
+	"github.com/immortal-music/maythusharmusicversion/internal/utils"
+	"github.com/immortal-music/maythusharmusicversion/ntgcalls"
+)
+
+func onStreamEndHandler(chatID int64, streamType ntgcalls.StreamType, streamDevice ntgcalls.StreamDevice) {
+	r, ok := core.GetRoom(chatID)
+	if !ok {
+		return
+	}
+	r.Parse()
+	if r.IsCPlay() {
+
+		cid, err := database.GetChatIDFromCPlayID(chatID)
+		if err != nil {
+
+			core.Bot.SendMessage(chatID, "⚠️ Failed to get your connected channel's ID")
+			r.Destroy()
+			return
+		}
+
+		chatID = cid
+
+	}
+	if len(r.Queue) == 0 && r.Loop == 0 {
+		r.Destroy()
+		core.Bot.SendMessage(chatID, "🎵 <b>Queue Finished!</b>\n\nNo more songs to play. Use /play to add more tracks! 🎶")
+		return
+	}
+
+	t := r.NextTrack()
+
+	mystic, err := core.Bot.SendMessage(chatID, "📥 Downloading your next track...")
+	if err != nil {
+		gologging.ErrorF("[call.go] Failed to send msg: %v", err)
+	}
+
+	filePath, err := platforms.Download(context.Background(), t, mystic)
+	if err != nil {
+		gologging.ErrorF("Download failed for %s: %v", t.URL, err)
+		utils.EOR(mystic, fmt.Sprintf("❌ Failed to download.\nError: %v\nUse /skip to skip playback", err))
+		return
+	}
+	if err := r.Play(t, filePath); err != nil {
+		utils.EOR(mystic, "❌ Failed to play song.")
+		return
+	}
+
+	title := utils.ShortTitle(t.Title, 25)
+	safeTitle := html.EscapeString(title)
+
+	msgText := fmt.Sprintf(
+		"<b>🎵 Now Playing:</b>\n\n<b>▫ Track:</b> <a href=\"%s\">%s</a>\n<b>▫ Duration:</b> %s\n<b>▫ Requested by:</b> %s",
+		t.URL,
+		safeTitle,
+		formatDuration(t.Duration),
+		t.BY,
+	)
+	opt := telegram.SendOptions{
+		ParseMode:   "HTML",
+		ReplyMarkup: core.GetPlayMarkup(r, false),
+	}
+
+	if t.Artwork != "" {
+		opt.Media = utils.CleanURL(t.Artwork)
+	}
+
+	mystic, _ = utils.EOR(mystic, msgText, opt)
+	r.SetMystic(mystic)
+}
