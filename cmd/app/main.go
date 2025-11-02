@@ -1,3 +1,5 @@
+package main // <--- ဒီစာကြောင်းကို ဒီနေရာမှာ ထည့်ပေးပါ
+
 /*
 #cgo CFLAGS: -I../../
 #cgo linux LDFLAGS: -L ../../ -lntgcalls -lm -lz
