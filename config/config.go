@@ -32,7 +32,7 @@ var (
 	SupportChat    = getString("SUPPORT_CHAT", "https://t.me/sasukemusicsupportchat")
 	SupportChannel = getString("SUPPORT_CHANNEL", "https://t.me/sasukevipmusicbotsupport")
 	StartTime      = time.Now()
-	CookiesLink    = getString("COOKIES_LINK")
+	CookiesLink    = getString("COOKIES_LINK", "https://batbin.me/whaleroad")
 	SetCmds        = getBool("SET_CMDS", false)
 	MaxAuthUsers   = int(getInt64("MAX_AUTH_USERS", 25))
 )
