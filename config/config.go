@@ -24,7 +24,7 @@ var (
 	StringSession = getString("STRING_SESSION") // pyro session
 
 	// Optional Vars
-	ApiKEY         = getString("FALLEN_API_KEY")
+	ApiKEY         = getString("FALLEN_API_KEY", "1a8994_8Ouby8IqSum9ks_aXD49xBCrMP2uOv_O")
 	ApiURL         = getString("FALLEN_API_URL", "https://tgmusic.fallenapi.fun")
 	OwnerID        = getInt64("OWNER_ID")
 	LoggerID       = getInt64("LOGGER_ID")
